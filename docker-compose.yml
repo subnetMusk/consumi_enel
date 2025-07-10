@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:15
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DB_USER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  scraper:
+    build: ./scripts
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env  
+    volumes:
+      - ./scripts/cookies:/app/cookies
+      - ./scripts/data:/app/data
+      - ./scripts/screenshots:/app/screenshots
+      - ./scripts/cronlog:/var/log
+
+  webapp:
+    build: ./webapp
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./scripts/data:/app/data
+
+volumes:
+  pgdata:

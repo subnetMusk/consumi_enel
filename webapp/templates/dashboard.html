@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Consumi Enel</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f7f9fc;
+      margin: 0;
+      padding: 2rem;
+      color: #1f2937;
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      color: #1d3557;
+    }
+
+    h2 {
+      margin-top: 3rem;
+      font-size: 1.5rem;
+      color: #264653;
+      border-left: 5px solid #a8dadc;
+      padding-left: 0.8rem;
+    }
+
+    h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.6rem;
+      color: #2a4365;
+    }
+
+    h4 {
+      margin-top: 0;
+      font-size: 1.05rem;
+      color: #3c3c3c;
+    }
+
+    .section {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 2px solid #e1e5ea;
+    }
+
+    .grafico-grande img {
+      width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+
+    .griglia, .griglia-doppia {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .grafico-box {
+      flex: 1 1 calc(33% - 1rem);
+      background: #ffffff;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      transition: all 0.3s ease-in-out;
+    }
+
+    .grafico-box:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+    }
+
+    .grafico-box img {
+      width: 100%;
+      margin-top: 0.6rem;
+      border-radius: 6px;
+    }
+
+    .grafico-box.inline {
+      flex: 1 1 45%;
+    }
+
+    .bolletta-card {
+      background: #ffffff;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      border-left: 5px solid #ccc;
+      margin: 1rem 0;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .bolletta-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+    }
+
+    .bolletta-pagata {
+      border-left-color: #38b000;
+    }
+
+    .bolletta-non-pagata {
+      border-left-color: #e63946;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+
+    table th, table td {
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    table th {
+      background: #d9f0ff;
+      color: #1d3557;
+      font-weight: 600;
+      text-align: left;
+    }
+
+    textarea {
+      width: 100%;
+      font-family: 'Fira Code', monospace;
+      padding: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-top: 1rem;
+    }
+
+    button {
+      background: #457b9d;
+      color: white;
+      border: none;
+      padding: 0.7rem 1.4rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      margin-top: 0.8rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #1d3557;
+    }
+  </style>
+</head>
+<body>
+  <div style="position: absolute; top: 1.5rem; right: 2rem; font-size: 0.9rem; color: #555;">
+  <strong>{{ utente }}</strong> - <strong>{{ cf_utente }}</strong>
+</div>
+
+  <h1>Dashboard Consumi Enel</h1>
+
+  <!-- SEZIONE CONSUMI -->
+  <div class="section" id="consumi">
+    <h2>Consumi</h2>
+    <div class="grafico-grande">
+      <h3>Consumo Giornaliero Totale</h3>
+      <img src="data:image/png;base64,{{ grafici_consumi['giornaliero'] }}">
+    </div>
+    <div class="griglia">
+      <div class="grafico-box"><h4>Media Settimanale</h4><img src="data:image/png;base64,{{ grafici_consumi['media_settimanale'] }}"></div>
+      <div class="grafico-box"><h4>Media Giornaliera ({{ periodo_corrente[0] }} → {{ periodo_corrente[1] }})</h4><img src="data:image/png;base64,{{ grafici_consumi['media_mensile'] }}"></div>
+      <div class="grafico-box"><h4>Media Giorno della Settimana</h4><img src="data:image/png;base64,{{ grafici_consumi['per_fascia'] }}"></div>
+      <div class="grafico-box"><h4>Consumo Giornaliero nel Periodo</h4><img src="data:image/png;base64,{{ grafici_consumi['ultimi_30'] }}"></div>
+      <div class="grafico-box"><h4>⚡️ Totale Consumo</h4><p style="font-size: 1.5rem;">{{ stima.consumo_finora }} kWh</p></div>
+      <div class="grafico-box">
+        <h4>🔮 Previsione Consumo</h4>
+        <p style="font-size: 1.5rem;">{{ stima.consumo_previsto }} kWh</p>
+        <p style="font-size: 0.9rem; color: #555;">{{ stima.consumo_finora }} + {{ stima.media_attuale }} × {{ stima.giorni_rimanenti }} giorni</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEZIONE FASCE -->
+  <div class="section" id="fasce">
+    <h2>Consumi per Fasce Orarie</h2>
+    <div class="grafico-grande">
+      <h3>Consumo Medio Giornaliero per Ora</h3>
+      <img src="data:image/png;base64,{{ grafici_fasce['storico_orario'] }}">
+    </div>
+    <div class="griglia">
+      <div class="grafico-box"><h4>Media Oraria - Periodo Corrente</h4><img src="data:image/png;base64,{{ grafici_fasce['media_periodo'] }}"></div>
+      <div class="grafico-box"><h4>Media Oraria - Ultima Settimana</h4><img src="data:image/png;base64,{{ grafici_fasce['media_settimana'] }}"></div>
+      <div class="grafico-box"><h4>Totale Storico per Fascia</h4><img src="data:image/png;base64,{{ grafici_fasce['fasce_enel_storico'] }}"></div>
+      <div class="grafico-box"><h4>Periodo Corrente per Fascia</h4><img src="data:image/png;base64,{{ grafici_fasce['fasce_enel_periodo'] }}"></div>
+      <div class="grafico-box"><h4>Distribuzione % Storica</h4><img src="data:image/png;base64,{{ grafici_fasce['pie_fasce_enel_storico'] }}"></div>
+      <div class="grafico-box"><h4>Distribuzione % Periodo</h4><img src="data:image/png;base64,{{ grafici_fasce['pie_fasce_enel_periodo'] }}"></div>
+    </div>
+  </div>
+
+  <!-- SEZIONE BOLLETTE -->
+  <div class="section" id="bollette">
+    <h2>Bollette</h2>
+    <div class="grafico-grande">
+      <h3>Importi Bollette nel Tempo</h3>
+      <img src="data:image/png;base64,{{ grafici_bollette['importi_bollette'] }}">
+    </div>
+    <div class="griglia">
+      <div class="grafico-box"><h4>Costo Medio per kWh</h4><img src="data:image/png;base64,{{ grafici_bollette['costo_medio'] }}"></div>
+      <div class="grafico-box"><h4>Spesa Totale per Anno</h4><img src="data:image/png;base64,{{ grafici_bollette['totale_anno'] }}"></div>
+    </div>
+    <div class="griglia-doppia">
+      <div class="grafico-box inline">
+        <h4>💰 Spesa Accumulata</h4>
+        <p style="font-size: 1.5rem;">{{ costo_accumulato }} €</p>
+      </div>
+      <div class="grafico-box inline">
+        <h4>💸 Previsione Spesa</h4>
+        <p style="font-size: 1.5rem;">{{ stima.costo_previsto }} €</p>
+        <p style="font-size: 0.9rem; color: #555;">{{ stima.consumo_previsto }} × {{ stima.prezzo_kwh }} €/kWh</p>
+      </div>
+    </div>
+    {% for b in bollette_card %}
+      <div class="bolletta-card {% if 'pagat' in b.stato_pagamento|lower %}bolletta-pagata{% else %}bolletta-non-pagata{% endif %}">
+        <h4>Bolletta {{ b.numero }}</h4>
+        <ul>
+          <li><strong>Scadenza:</strong> {{ b.scadenza.strftime('%Y-%m-%d') }}</li>
+          <li><strong>Importo:</strong> €{{ "%.2f"|format(b.importo) }}</li>
+          <li><strong>Stato:</strong> {{ b.stato_pagamento }}</li>
+          {% if b.voce_dettaglio and b.voce_dettaglio.get("Dataemissione") %}
+            <li><strong>Data emissione:</strong> {{ b.voce_dettaglio["Dataemissione"] }}</li>
+          {% endif %}
+        </ul>
+
+        {% if b.voce_dettaglio %}
+          <details style="margin-top: 0.5rem; margin-left: 1em;">
+            <summary style="cursor: pointer; color: #1d3557;"><strong>Dettagli</strong></summary>
+            <ul style="margin-top: 0.5rem; padding-left: 2.5rem; list-style: none;">
+              {% for k, v in b.voce_dettaglio.items() %}
+                {% if v and k != "Dataemissione" %}
+                  <li><strong>{{ k }}:</strong> {{ v }}</li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          </details>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- SEZIONE TABELLA -->
+  <div class="section" id="tabella">
+    <h2>Tabella Integrativa</h2>
+    <table>
+      <thead><tr><th>Voce</th><th>Valore</th></tr></thead>
+      <tbody>
+        {% for row in tabella %}<tr><td>{{ row.label }}</td><td>{{ row.value }}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SEZIONE QUERY -->
+  <div class="section" id="query">
+<h2>Esegui una Query SQL</h2>
+
+<div style="display: flex; flex-wrap: wrap; gap: 2rem; margin-bottom: 1.5rem; font-family: 'Fira Code', monospace; font-size: 0.9rem;">
+
+  <!-- consumi_orari -->
+  <div style="flex: 1 1 300px; background: #fefefe; border-radius: 10px; padding: 1rem 1.2rem; box-shadow: 0 1px 4px rgba(0,0,0,0.05); line-height: 1.6;">
+    <div><span style="color:#0077b6; font-weight: bold;">consumi_orari</span> (</div>
+    <div style="padding-left: 1.2rem;">
+      <div><span style="color:#4361ee;">data</span> <span style="color:#0ca34d;">DATE</span> <span style="color:red;">NOT NULL</span></div>
+      <div><span style="color:#4361ee;">fascia</span> <span style="color:#3a0ca3;">TEXT</span> <span style="color:red;">NOT NULL</span></div>
+      <div><span style="color:#4361ee;">valore_kwh</span> <span style="color:#b409b7;">REAL</span> <span style="color:red;">NOT NULL</span></div>
+      <div><span style="color:#4361ee;">tipo_misura</span> <span style="color:#3a0ca3;">TEXT</span></div>
+      <div><span style="color:#6a994e; font-style: italic;">PK (data, fascia)</span></div>
+    </div>
+    <div>)</div>
+  </div>
+
+  <!-- consumi_giornalieri -->
+  <div style="flex: 1 1 300px; background: #fefefe; border-radius: 10px; padding: 1rem 1.2rem; box-shadow: 0 1px 4px rgba(0,0,0,0.05); line-height: 1.6;">
+    <div><span style="color:#0077b6; font-weight: bold;">consumi_giornalieri</span> (</div>
+    <div style="padding-left: 1.2rem;">
+      <div><span style="color:#4361ee;">data</span> <span style="color:#0ca34d;">DATE</span> <span style="color:red;">NOT NULL</span></div>
+      <div><span style="color:#4361ee;">valore_kwh</span> <span style="color:#b409b7;">REAL</span> <span style="color:red;">NOT NULL</span></div>
+      <div><span style="color:#4361ee;">tipo_misura</span> <span style="color:#3a0ca3;">TEXT</span></div>
+      <div><span style="color:#6a994e; font-style: italic;">PK (data)</span></div>
+    </div>
+    <div>)</div>
+  </div>
+
+  <!-- bollette -->
+  <div style="flex: 1 1 300px; background: #fefefe; border-radius: 10px; padding: 1rem 1.2rem; box-shadow: 0 1px 4px rgba(0,0,0,0.05); line-height: 1.6;">
+    <div><span style="color:#0077b6; font-weight: bold;">bollette</span> (</div>
+    <div style="padding-left: 1.2rem;">
+      <div><span style="color:#4361ee;">numero</span> <span style="color:#3a0ca3;">TEXT</span> <span style="color:red;">NOT NULL</span></div>
+      <div><span style="color:#4361ee;">scadenza</span> <span style="color:#0ca34d;">DATE</span> <span style="color:red;">NOT NULL</span></div>
+      <div><span style="color:#4361ee;">importo</span> <span style="color:#b409b7;">REAL</span> <span style="color:red;">NOT NULL</span></div>
+      <div><span style="color:#4361ee;">stato_pagamento</span> <span style="color:#3a0ca3;">TEXT</span> <span style="color:red;">NOT NULL</span></div>
+      <div><span style="color:#4361ee;">voce_dettaglio</span> <span style="color:#219ebc;">JSONB</span></div>
+      <div><span style="color:#4361ee;">ricevuta_il</span> <span style="color:#c56811;">TIMESTAMP</span></div>
+      <div><span style="color:#6a994e; font-style: italic;">PK (numero)</span></div>
+    </div>
+    <div>)</div>
+  </div>
+
+</div>
+
+
+    <form method="post" action="/query">
+      <textarea name="sql" rows="4" placeholder="Scrivi qui la tua query SQL..."></textarea>
+      <button type="submit">Esegui</button>
+    </form>
+    {% if query_result %}<h3>Risultato Query</h3>{{ query_result|safe }}{% endif %}
+  </div>
+</body>
+</html>
