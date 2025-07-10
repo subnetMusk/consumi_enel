@@ -22,6 +22,7 @@ Il sistema supporta:
   </p>
   <p><strong>Nota:</strong> I dati mostrati nello screenshot sono generati automaticamente e potrebbero non rappresentare valori realistici. L’immagine ha il solo scopo illustrativo ed è stata creata per proteggere le informazioni reali dell’utente.</p>
 </details>
+
 ---
 
 ## Funzionalità
